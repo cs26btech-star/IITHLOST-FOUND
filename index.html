@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IITH Lost & Found</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Newsreader:ital@1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F1E2;
+    --card:#FFFFFF;
+    --ink:#2B2620;
+    --muted:#8A8070;
+    --line:#EAE2CE;
+    --lost:#D2564A;
+    --found:#2F8E96;
+    --accent:#E2793D;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif;}
+  h1,.brand,.btn,.tab{font-family:'Baloo 2',sans-serif;}
+  .accent-word{font-family:'Newsreader',serif; font-style:italic; color:var(--accent);}
+
+  header{background:var(--bg); border-bottom:1px solid var(--line); padding:24px 24px 20px;}
+  .top-row{display:flex; align-items:center; justify-content:space-between; max-width:1020px; margin:0 auto; gap:16px; flex-wrap:wrap;}
+  .brand-block{display:flex; align-items:center; gap:10px;}
+  .logo{width:42px; height:42px; flex:none;}
+  .brand{font-size:24px; font-weight:700; margin:0; color:var(--ink);}
+  .tagline{max-width:1020px; margin:10px auto 0; font-size:16px; color:var(--muted);}
+  .btn{background:linear-gradient(135deg,var(--accent),var(--lost)); color:#fff; border:none; font-size:16px; font-weight:600; padding:11px 22px; border-radius:30px; cursor:pointer; box-shadow:0 3px 10px rgba(210,86,74,0.25);}
+  .btn:hover{filter:brightness(1.06);}
+  .btn.secondary{background:transparent; color:var(--muted); border:1px solid var(--line); box-shadow:none;}
+
+  .controls{max-width:1020px; margin:18px auto 0; display:flex; flex-direction:column; gap:10px;}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  #search{flex:1; min-width:180px; padding:11px 16px; border-radius:30px; border:1px solid var(--line); background:var(--card); font-size:15px; font-family:'Inter';}
+  .tab{padding:8px 16px; border-radius:20px; border:1px solid var(--line); background:var(--card); color:var(--muted); cursor:pointer; font-size:15px; font-weight:600;}
+  .tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .chip{padding:6px 14px; border-radius:20px; border:none; cursor:pointer; font-size:13px; font-weight:600; font-family:'Inter'; color:#fff; opacity:0.55;}
+  .chip.active{opacity:1; box-shadow:0 2px 6px rgba(0,0,0,0.15);}
+  .label{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-right:2px; font-weight:600;}
+
+  main{max-width:1020px; margin:26px auto 80px; padding:0 24px;}
+  #empty{color:var(--muted); text-align:center; padding:60px 0; display:none;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px;}
+  .card{background:var(--card); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 2px 10px rgba(43,38,32,0.06);}
+  .stripe{height:6px;}
+  .stripe.lost{background:var(--lost);}
+  .stripe.found{background:var(--found);}
+  .card img{width:100%; height:150px; object-fit:cover; background:#EFEBE0;}
+  .card-body{padding:16px; display:flex; flex-direction:column; gap:8px;}
+  .badge{align-self:flex-start; font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; color:#fff; text-transform:uppercase; letter-spacing:0.03em;}
+  .badge.lost{background:var(--lost);}
+  .badge.found{background:var(--found);}
+  .card h3{margin:2px 0 0; font-family:'Baloo 2'; font-size:19px; font-weight:600;}
+  .card p{margin:0; color:var(--muted); font-size:13.5px;}
+  .tag-row{display:flex; gap:6px; flex-wrap:wrap;}
+  .place-tag{font-size:12px; font-weight:600; color:#fff; padding:3px 11px; border-radius:20px;}
+  .meta{font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:9px; margin-top:4px; display:flex; justify-content:space-between;}
+  .card-actions{display:flex; gap:6px; margin-top:2px; flex-wrap:wrap;}
+  .icon-btn{flex:1; min-width:76px; background:none; border:1px solid var(--line); color:var(--muted); font-size:12.5px; font-weight:600; padding:7px 6px; border-radius:20px; cursor:pointer; font-family:'Inter'; text-align:center; text-decoration:none;}
+  .icon-btn:hover{border-color:var(--ink); color:var(--ink);}
+  .icon-btn.share{background:#25D366; color:#fff; border:none;}
+  .card.resolved{opacity:0.45;}
+
+  .overlay{display:none; position:fixed; inset:0; background:rgba(43,38,32,0.4); align-items:center; justify-content:center; padding:20px; z-index:20;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--card); border-radius:16px; padding:26px; width:100%; max-width:460px; max-height:90vh; overflow:auto;}
+  .modal h2{margin:0 0 16px; font-family:'Baloo 2'; font-size:24px;}
+  .field{margin-bottom:13px; display:flex; flex-direction:column; gap:5px;}
+  .field label{font-size:13px; color:var(--muted); font-weight:600;}
+  .field input, .field textarea{padding:10px 13px; border-radius:9px; border:1px solid var(--line); background:var(--bg); font-family:'Inter'; font-size:14px;}
+  .field textarea{resize:vertical; min-height:52px;}
+  .type-toggle{display:flex; gap:8px;}
+  .type-toggle button{flex:1; padding:10px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--muted); cursor:pointer; font-family:'Inter'; font-weight:600;}
+  .type-toggle button.active[data-type="lost"]{background:var(--lost); color:#fff; border-color:var(--lost);}
+  .type-toggle button.active[data-type="found"]{background:var(--found); color:#fff; border-color:var(--found);}
+  .place-picker{display:flex; gap:6px; flex-wrap:wrap;}
+  .place-picker .chip{opacity:0.5;}
+  .place-picker .chip.active{opacity:1;}
+  .modal-actions{display:flex; gap:10px; margin-top:16px;}
+  #status{font-size:13px; color:var(--muted); text-align:center; padding:20px 0;}
+  .match-badge{background:#FFF3E3; color:var(--accent); border:1px solid var(--accent); font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px; cursor:pointer; font-family:'Inter';}
+  .match-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .match-row:last-child{border-bottom:none;}
+  .notify-btn{flex:none; padding:7px 14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-row">
+    <div class="brand-block">
+      <svg class="logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#E2793D"/><stop offset="100%" stop-color="#D2564A"/>
+        </linearGradient></defs>
+        <circle cx="24" cy="24" r="22" fill="url(#lg)"/>
+        <path d="M24 12c-5 0-9 4-9 9 0 6.5 9 15 9 15s9-8.5 9-15c0-5-4-9-9-9z" fill="#fff"/>
+        <circle cx="24" cy="21" r="3.4" fill="#D2564A"/>
+      </svg>
+      <h1 class="brand">IITH Lost & Found</h1>
+    </div>
+    <button class="btn" id="openPost">+ Post an item</button>
+  </div>
+  <p class="tagline">Lost it? Someone <span class="accent-word">probably</span> found it. Search first — if someone's already posted a match, just hit <strong>Contact</strong>.</p>
+  <div class="controls">
+    <div class="row"><input id="search" type="text" placeholder="Search by item name..." /></div>
+    <div class="row">
+      <span class="label">Type</span>
+      <button class="tab active" data-filter-type="all">All</button>
+      <button class="tab" data-filter-type="lost">Lost</button>
+      <button class="tab" data-filter-type="found">Found</button>
+    </div>
+    <div class="row">
+      <span class="label">When</span>
+      <button class="tab active" data-filter-time="all">Any time</button>
+      <button class="tab" data-filter-time="today">Today</button>
+      <button class="tab" data-filter-time="yesterday">Yesterday</button>
+      <button class="tab" data-filter-time="week">This week</button>
+    </div>
+    <div class="row" id="placeFilterRow"><span class="label">Place</span></div>
+  </div>
+</header>
+
+<main>
+  <div id="status">Loading items…</div>
+  <div id="empty">Nothing here yet. Be the first to post.</div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Post an item</h2>
+    <div class="field">
+      <label>Type</label>
+      <div class="type-toggle">
+        <button type="button" data-type="lost" class="active">Lost it</button>
+        <button type="button" data-type="found">Found it</button>
+      </div>
+    </div>
+    <div class="field"><label for="f-title">Item name</label><input id="f-title" placeholder="e.g. Black water bottle" /></div>
+    <div class="field"><label for="f-img">Photo</label><input id="f-img" type="file" accept="image/*" /></div>
+    <div class="field"><label for="f-desc">Description</label><textarea id="f-desc" placeholder="What it looks like, any identifying details"></textarea></div>
+    <div class="field"><label for="f-loc">Exact place found / lost</label><input id="f-loc" placeholder="e.g. 2nd floor, near LT-3" /></div>
+    <div class="field" id="handoverField" style="display:none">
+      <label for="f-handover">Handed over to (if applicable)</label>
+      <input id="f-handover" placeholder="e.g. Left at LHC security desk / with me" />
+    </div>
+    <div class="field">
+      <label>Place tag</label>
+      <div class="place-picker" id="placePicker"></div>
+    </div>
+    <div class="field"><label for="f-contact">Your contact (phone / room no. / email)</label><input id="f-contact" placeholder="So people can reach you" /></div>
+    <div class="modal-actions">
+      <button class="btn secondary" id="cancelPost">Cancel</button>
+      <button class="btn" id="submitPost">Post</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="matchOverlay">
+  <div class="modal">
+    <h2 id="matchTitle">Possible matches</h2>
+    <div id="matchList"></div>
+    <div class="modal-actions">
+      <button class="btn secondary" id="closeMatch" style="flex:1">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+  // ---- FIREBASE CONFIG (see README) ----
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+  const itemsRef = db.collection("items");
+
+  // Show errors on-screen (not just in the console) — helpful since most
+  // people won't have a laptop handy to check devtools on their phone.
+  window.addEventListener("error", (e) => {
+    const banner = document.createElement("div");
+    banner.style.cssText = "position:fixed;top:0;left:0;right:0;background:#D2564A;color:#fff;padding:10px 16px;font-family:Inter,sans-serif;font-size:13px;z-index:999;";
+    banner.textContent = "Error: " + (e.message || "something went wrong") + " — check your Firebase config in index.html, and make sure you're opening this from a real web link (not a local file).";
+    document.body.prepend(banner);
+  });
+
+  // ---- EMAILJS CONFIG (optional, for automatic match emails — see README) ----
+  // Leave as-is and the app still works fine; matches with an email contact
+  // just won't auto-send, people will still see the "Notify" button.
+  const EMAILJS = { publicKey: "YOUR_EMAILJS_PUBLIC_KEY", serviceId: "YOUR_SERVICE_ID", templateId: "YOUR_TEMPLATE_ID" };
+  if (EMAILJS.publicKey !== "YOUR_EMAILJS_PUBLIC_KEY") emailjs.init(EMAILJS.publicKey);
+
+  // ---- PLACE TAGS ----
+  const PLACE_TAGS = [
+    "Freshers Hostels","Hostel Circle","Old Hostels","New Hostels",
+    "Lecture Hall Complex","KRC","Main Gate","Faculty Towers","SNCC","Wet Canteen"
+  ];
+  const TAG_COLORS = ["#E2793D","#2F8E96","#8C6BAA","#6E9B5E","#D2564A","#D9A62E","#3E7CB1"];
+  function colorFor(tag) {
+    if (!tag) return "#B0A990";
+    let h = 0; for (let i = 0; i < tag.length; i++) h = tag.charCodeAt(i) + ((h << 5) - h);
+    return TAG_COLORS[Math.abs(h) % TAG_COLORS.length];
+  }
+
+  // ---- SMART MATCHING ----
+  // Compares a lost/found post against all posts of the opposite type,
+  // and flags anything that shares a place tag or a meaningful word in the title.
+  const STOPWORDS = new Set(["a","an","the","my","lost","found","it","item","of","in","at","on","with","and","near","lost:","found:"]);
+  function keywordsOf(title) {
+    return (title || "").toLowerCase().split(/\W+/).filter(w => w.length >= 3 && !STOPWORDS.has(w));
+  }
+  function isMatch(a, b) {
+    if (a.placeTag && b.placeTag && a.placeTag === b.placeTag) return true;
+    const aw = keywordsOf(a.title);
+    return keywordsOf(b.title).some(w => aw.includes(w));
+  }
+  function findMatches(item) {
+    return allItems.filter(o => o.id !== item.id && !o.resolved && o.type !== item.type && isMatch(item, o));
+  }
+
+  // Direct reply link for any card — opens WhatsApp (phone contact) or a
+  // pre-filled email (email contact) straight to that poster.
+  function contactHref(item) {
+    const c = (item.contact || "").trim();
+    if (!c) return null;
+    const msg = `Hi! I saw your "${item.title}" ${item.type} post on IITH Lost & Found (${item.placeTag || item.location}).`;
+    if (c.includes("@")) return `mailto:${c}?subject=${encodeURIComponent("About your " + item.type + " item: " + item.title)}&body=${encodeURIComponent(msg)}`;
+    const digits = c.replace(/\D/g, "");
+    if (digits.length >= 10) return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
+    return null;
+  }
+
+  async function notifyMatch(match, newItem, btn) {
+    if (match.contact && match.contact.includes("@") && EMAILJS.publicKey !== "YOUR_EMAILJS_PUBLIC_KEY") {
+      try {
+        await emailjs.send(EMAILJS.serviceId, EMAILJS.templateId, {
+          to_email: match.contact, matched_item: newItem.title,
+          place: newItem.placeTag || newItem.location, poster_contact: newItem.contact
+        });
+        if (btn) { btn.textContent = "Notified ✓"; btn.disabled = true; }
+        return;
+      } catch (err) { console.error(err); }
+    }
+    const text = encodeURIComponent(`Hi! I think I ${newItem.type === "found" ? "found" : "lost"} something matching your "${match.title}" post near ${match.placeTag || match.location}. Contact me: ${newItem.contact}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+    if (btn) { btn.textContent = "Opened WhatsApp"; }
+  }
+
+  const matchOverlay = document.getElementById("matchOverlay");
+  const matchList = document.getElementById("matchList");
+  function openMatchModal(newItem, matches, autoEmail) {
+    document.getElementById("matchTitle").textContent =
+      autoEmail ? `${matches.length} possible match${matches.length > 1 ? "es" : ""} for your post` : "Possible matches";
+    matchList.innerHTML = "";
+    matches.forEach(m => {
+      const row = document.createElement("div");
+      row.className = "match-row";
+      row.innerHTML = `
+        <div>
+          <strong>${esc(m.title)}</strong>
+          <div class="meta" style="border:none; padding:0; margin:0;">${m.placeTag ? esc(m.placeTag) + " · " : ""}${esc(m.location)}</div>
+        </div>
+        <button class="icon-btn notify-btn">Notify</button>`;
+      const btn = row.querySelector(".notify-btn");
+      btn.addEventListener("click", () => notifyMatch(m, newItem, btn));
+      matchList.appendChild(row);
+      if (autoEmail && m.contact && m.contact.includes("@")) notifyMatch(m, newItem, btn);
+    });
+    matchOverlay.classList.add("open");
+  }
+  document.getElementById("closeMatch").addEventListener("click", () => matchOverlay.classList.remove("open"));
+
+  let allItems = [];
+  let filterType = "all", filterTime = "all", activePlaceFilters = new Set(), activeType = "lost";
+  let selectedPlaceTag = null, imageFile = null;
+
+  const grid = document.getElementById("grid");
+  const statusEl = document.getElementById("status");
+  const emptyEl = document.getElementById("empty");
+  const searchInput = document.getElementById("search");
+  const overlay = document.getElementById("overlay");
+
+  const placeFilterRow = document.getElementById("placeFilterRow");
+  const placePicker = document.getElementById("placePicker");
+  PLACE_TAGS.forEach(tag => {
+    const color = colorFor(tag);
+
+    const chip = document.createElement("button");
+    chip.className = "chip active"; chip.textContent = tag; chip.type = "button";
+    chip.style.background = color; chip.classList.remove("active");
+    chip.addEventListener("click", () => {
+      chip.classList.toggle("active");
+      activePlaceFilters.has(tag) ? activePlaceFilters.delete(tag) : activePlaceFilters.add(tag);
+      render();
+    });
+    placeFilterRow.appendChild(chip);
+
+    const pickBtn = document.createElement("button");
+    pickBtn.className = "chip"; pickBtn.textContent = tag; pickBtn.type = "button";
+    pickBtn.style.background = color;
+    pickBtn.addEventListener("click", () => {
+      placePicker.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      pickBtn.classList.add("active");
+      selectedPlaceTag = tag;
+    });
+    placePicker.appendChild(pickBtn);
+  });
+
+  itemsRef.orderBy("createdAt", "desc").onSnapshot((snap) => {
+    allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    statusEl.style.display = "none";
+    render();
+  }, (err) => {
+    statusEl.textContent = "Couldn't load items. Check your Firebase config in index.html.";
+    console.error(err);
+  });
+
+  function bucketOf(ts) {
+    if (!ts || !ts.toDate) return null;
+    const days = Math.floor((Date.now() - ts.toDate().getTime()) / 86400000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days <= 7) return "week";
+    return "older";
+  }
+  function timeLabel(ts) {
+    const b = bucketOf(ts);
+    if (b === "today") return "Today";
+    if (b === "yesterday") return "Yesterday";
+    if (!ts || !ts.toDate) return "";
+    const days = Math.floor((Date.now() - ts.toDate().getTime()) / 86400000);
+    return days + "d ago";
+  }
+
+  function render() {
+    const q = searchInput.value.trim().toLowerCase();
+    const filtered = allItems.filter(item => {
+      if (filterType !== "all" && item.type !== filterType) return false;
+      if (filterTime !== "all") {
+        const b = bucketOf(item.createdAt);
+        if (filterTime === "week" ? !["today","yesterday","week"].includes(b) : b !== filterTime) return false;
+      }
+      if (activePlaceFilters.size && !activePlaceFilters.has(item.placeTag)) return false;
+      if (q && !item.title.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    grid.innerHTML = "";
+    emptyEl.style.display = filtered.length === 0 ? "block" : "none";
+
+    filtered.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "card" + (item.resolved ? " resolved" : "");
+      const shareText = encodeURIComponent(`${item.type === "lost" ? "Lost" : "Found"}: ${item.title} — ${item.placeTag || item.location}. Contact: ${item.contact}`);
+      const matchCount = item.resolved ? 0 : findMatches(item).length;
+      card.innerHTML = `
+        <div class="stripe ${item.type}"></div>
+        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="">` : ""}
+        <div class="card-body">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+            <span class="badge ${item.type}">${item.type}</span>
+            ${matchCount ? `<button class="match-badge" data-id="${item.id}">🔎 ${matchCount} match${matchCount > 1 ? "es" : ""}</button>` : ""}
+          </div>
+          <h3>${esc(item.title)}</h3>
+          <p>${esc(item.description || "")}</p>
+          ${item.handover ? `<p><strong>Handed to:</strong> ${esc(item.handover)}</p>` : ""}
+          <div class="tag-row">${item.placeTag ? `<span class="place-tag" style="background:${colorFor(item.placeTag)}">${esc(item.placeTag)}</span>` : ""}</div>
+          <div class="meta"><span>📍 ${esc(item.location)}</span><span>${timeLabel(item.createdAt)}</span></div>
+          <div class="card-actions">
+            <button class="icon-btn resolve-btn" data-id="${item.id}">${item.resolved ? "Reopen" : "Resolved"}</button>
+            <button class="icon-btn contact-btn" data-id="${item.id}">Contact</button>
+            <a class="icon-btn share" target="_blank" href="https://wa.me/?text=${shareText}">Share</a>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function esc(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
+
+  document.querySelectorAll("[data-filter-type]").forEach(tab => tab.addEventListener("click", () => {
+    document.querySelectorAll("[data-filter-type]").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active"); filterType = tab.dataset.filterType; render();
+  }));
+  document.querySelectorAll("[data-filter-time]").forEach(tab => tab.addEventListener("click", () => {
+    document.querySelectorAll("[data-filter-time]").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active"); filterTime = tab.dataset.filterTime; render();
+  }));
+  searchInput.addEventListener("input", render);
+
+  grid.addEventListener("click", (e) => {
+    if (e.target.classList.contains("resolve-btn")) {
+      const item = allItems.find(i => i.id === e.target.dataset.id);
+      itemsRef.doc(item.id).update({ resolved: !item.resolved });
+    }
+    if (e.target.classList.contains("match-badge")) {
+      const item = allItems.find(i => i.id === e.target.dataset.id);
+      openMatchModal(item, findMatches(item), false);
+    }
+    if (e.target.classList.contains("contact-btn")) {
+      const item = allItems.find(i => i.id === e.target.dataset.id);
+      const href = contactHref(item);
+      if (href) window.open(href, "_blank");
+      else alert("Reach them at: " + item.contact);
+    }
+  });
+
+  document.getElementById("openPost").addEventListener("click", () => overlay.classList.add("open"));
+  document.getElementById("cancelPost").addEventListener("click", () => overlay.classList.remove("open"));
+
+  document.querySelectorAll(".type-toggle button").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".type-toggle button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active"); activeType = btn.dataset.type;
+    document.getElementById("handoverField").style.display = activeType === "found" ? "flex" : "none";
+  }));
+
+  document.getElementById("f-img").addEventListener("change", (e) => { imageFile = e.target.files[0] || null; });
+
+  document.getElementById("submitPost").addEventListener("click", async () => {
+    const title = document.getElementById("f-title").value.trim();
+    const description = document.getElementById("f-desc").value.trim();
+    const location = document.getElementById("f-loc").value.trim();
+    const handover = document.getElementById("f-handover").value.trim();
+    const contact = document.getElementById("f-contact").value.trim();
+    if (!title || !location || !contact) { alert("Please fill in the item name, place, and your contact info."); return; }
+
+    const submitBtn = document.getElementById("submitPost");
+    submitBtn.disabled = true; submitBtn.textContent = "Posting…";
+
+    let imageUrl = null;
+    try {
+      if (imageFile) {
+        const ref = storage.ref().child("items/" + Date.now() + "_" + imageFile.name);
+        await ref.put(imageFile);
+        imageUrl = await ref.getDownloadURL();
+      }
+      const newItem = {
+        type: activeType, title, description, location, handover,
+        placeTag: selectedPlaceTag, contact, imageUrl, resolved: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await itemsRef.add(newItem);
+      overlay.classList.remove("open");
+      ["f-title","f-desc","f-loc","f-handover","f-contact"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("f-img").value = ""; imageFile = null; selectedPlaceTag = null;
+      placePicker.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+
+      // Check for possible matches on the opposite board right away
+      const oppositeType = activeType === "lost" ? "found" : "lost";
+      const matches = allItems.filter(o => !o.resolved && o.type === oppositeType && isMatch(newItem, o));
+      if (matches.length) openMatchModal(newItem, matches, true);
+    } catch (err) {
+      alert("Couldn't post — check your Firebase config (Storage may need to be enabled).");
+      console.error(err);
+    } finally {
+      submitBtn.disabled = false; submitBtn.textContent = "Post";
+    }
+  });
+</script>
+</body>
+</html>
